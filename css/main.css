@@ -1,0 +1,38 @@
+
+
+body, html {
+	background-color: #000;
+}
+
+#sidebar {
+	position: absolute;
+	background-color: #333;
+	width: 200px;
+	padding: 20px;
+	display: block;
+	overflow: hidden;
+	z-index: 30;
+border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 20px;
+border-bottom-left-radius: 0px;        	
+
+}
+
+#sidebar h2 {
+	color: #DDD;
+	font-weight: normal;
+	font-size: 18px;
+}
+
+
+#playerHolder {
+     position: relative;
+      
+}
+
+
+.nano { background: width: 100%; height: 500px; }
+.nano .content { padding: 10px; }
+.nano .pane   { background: #888; }
+.nano .slider { background: #111; }
