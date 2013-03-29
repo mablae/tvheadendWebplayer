@@ -14,15 +14,25 @@ Not less. Not more.
 What is needed?
 -----------------
  
- - crtmpserver 
+- crtmpserver 
 
  Install using `sudo apt-get install crtmpserver`
 
  Default config is right and we can use it out of the box.
 
 
-
- - avconv
+- avconv
 
  The successor of ffmpeg is used to convert the video to a smaller size and bitrate. 
+
+
+- node.js / express.js
+
+The webapp is served by node.js server. Also the avconv process is controlled by this instance.
+
+
+- bower
+
+We use bower for managing client-side libs like jquery, nanoscroller etc
+Just type `bower install` in project root.
 
