@@ -35,7 +35,7 @@ $(function() {
                     }
       });
 	*/
-	var mainPlayer = flowplayer("jquery_jplayer_1", "/flowplayer/flowplayer-3.2.16.swf", {
+   var mainPlayer = flowplayer("playerHolder", "/flowplayer/flowplayer-3.2.16.swf", {
  
     clip: {
         url: 'myStreamName',
@@ -59,8 +59,8 @@ $(function() {
   
 
    $('#playerHolder').css({
-         width: '100%',
-        height: '100%'
+        width: '100%',
+        height: $(document).height() - 30
         
     });
 
@@ -178,7 +178,7 @@ $(function() {
 		channelDialog.find('.modal-body').html(['<p>Externer Player oder im Browser starten?<p>' ,
 			'<div class="btn-group">' ,
 				'<a href="'+tvheadendHost+'/playlist/channelid/' +identifier+'.m3u" title="m3u Playlist" class="btn"><i class="icon-play"> </i> m3u Playlist</a>',
-				'<a href="'+tvheadendHost+'/stream/channelid/' +identifier+'" title="m3u Playlist" class="btn channelLinkStream"><i class="icon-play"> </i> Stream starten</a>',
+				'<a href="'+tvheadendHost+'/stream/channelid/' +identifier+'" title="m3u Playlist" data-identifier="'+identifier+'" class="btn channelLinkStream"><i class="icon-play"> </i> Stream starten</a>',
 			'</div>'
 			].join(''))
 		channelDialog.modal();	  
@@ -203,6 +203,7 @@ $(function() {
     	viewChannels(id);
     });
 
+/*
     $(document).on("click", "a.channelLink", function(e) {
     	e.preventDefault();
     	var id = $(this).data('identifier');
@@ -210,11 +211,32 @@ $(function() {
     	createStreamWindow(name, id);
 
     });
-
-    $(document).on("click", "a.channelLinkStream", function(e) {
+*/
+    $(document).on("click", "a.channelLink", function(e) {
     	e.preventDefault();
-    	var mediaUrl = $(this).attr('href');
-    	mainPlayer.jPlayer("setMedia", {'m4v' : mediaUrl});
+    	mainPlayer.stop();
+        var mediaUrl = '/channel/'+$(this).data('identifier');
+        $.ajax({
+                            url: mediaUrl,
+                            dataType: 'json',
+                            success: function(responseData, textStatus, jqXHR)
+                            {
+                                //localStorage.setItem('channelTags', JSON.stringify(responseData.entries));
+                                //channelTags = responseData.entries;
+                                //viewChannelTags();
+
+                               setTimeout(function() {
+                               mainPlayer.play();
+                               } , 500);
+                            },
+                            error: function (responseData, textStatus, errorThrown)
+                            {
+                                console.warn(responseData, textStatus, errorThrown);
+
+                            }
+                        });
+
+    	//mainPlayer.jPlayer("setMedia", {'m4v' : mediaUrl});
     });
 
     $(document).on("click", "a.backLink", function(e) {
