@@ -1,21 +1,23 @@
 
 
 body, html {
-	background-color: #000;
+    background-color: #000;
+    overflow: hidden;
 }
+
 
 #sidebar {
 	position: absolute;
 	background-color: #333;
-	width: 200px;
-	padding: 20px;
+	width: 240px;
+	padding: 10px;
 	display: block;
-	overflow: hidden;
+	/*overflow: hidden;*/
 	z-index: 30;
-border-top-left-radius: 0px;
-border-top-right-radius: 0px;
-border-bottom-right-radius: 20px;
-border-bottom-left-radius: 0px;        	
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+        border-bottom-right-radius: 20px;
+        border-bottom-left-radius: 0px;        	
 
 }
 
@@ -27,11 +29,24 @@ border-bottom-left-radius: 0px;
 
 
 #playerHolder {
-     position: relative;
-  
+
       
 }
 
+a.toggleLink {
+  font-size: 30px;
+  padding: 10px;
+  left: 260px;
+  position: absolute;
+  border-radius: 0px 20px 20px 0px;
+  background-color: #333;
+  text-decoration: none;
+}
+
+a.channelLink img {
+  width: 48px;
+  height: 48px; 
+}
 
 .nano { background: width: 100%; height: 500px; }
 .nano .content { padding: 10px; }

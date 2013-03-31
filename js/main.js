@@ -18,34 +18,49 @@ $(function() {
     var tvheadendHost = 'http://192.168.1.50:9981';
     var currentTag = false;
     var menuHolder = $('#menuHolder');
-        /*
-	var mainPlayer = $("#jquery_jplayer_1").jPlayer({
-        ready: function () {
-          $(this).jPlayer("setMedia", {
-            m4v: "http://www.jplayer.org/video/m4v/Big_Buck_Bunny_Trailer_480x270_h264aac.m4v",
-            ogv: "http://www.jplayer.org/video/ogv/Big_Buck_Bunny_Trailer_480x270.ogv",
-            poster: "http://www.jplayer.org/video/poster/Big_Buck_Bunny_Trailer_480x270.png"
-          });
-        },
-        swfPath: "/components/jplayer/jquery.jplayer",
-        supplied: "m4v, ogv",
-        size: {
-                         width: '100%',
-                         height: '100%'
-                    }
-      });
-	*/
+    var socket = io.connect();
+    var resizeDoIt; 
+
+    /* SocketIO EventListeners */
+
+    socket.on('say-hello', function (data) {
+        console.log(data);
+        if (data.connected) {
+            humane.log("WebSockets Verbindung hergestellt!");
+        }
+    }); 
+
+    socket.on('error', function(errObj) {
+       console.log(errObj);
+
+   });
+
+   socket.on('statusUpdate', function(data) {
+       console.log(data);
+       if (data) {
+           humane.log(data.msg);
+           mainPlayer.play();
+       }
+   });
+
    var mainPlayer = flowplayer("playerHolder", "/flowplayer/flowplayer-3.2.16.swf", {
- 
-    clip: {
+      clip: {
         url: 'myStreamName',
         live: true,
+        scaling: 'fit',
+        autoPlay: false,
+        onBeforePause : function(){
+            return false;
+        },          
         // configure clip to use influxis as our provider, it uses our rtmp plugin
         provider: 'influxis'
     },
  
     // streaming plugins are configured under the plugins node
     plugins: {
+        // Show no controls at all
+        controls: null,       
+
  
         // here is our rtpm plugin configuration
         influxis: {
@@ -56,13 +71,20 @@ $(function() {
         }
       }
     });
-  
 
-   $('#playerHolder').css({
-        width: '100%',
-        height: $(document).height() - 30
+  
+   var resizePlayerHolder = function() {
+     $('#playerHolder').css({
+        width: $(window).width()- 5,
+        height: $(window).height() - 20
         
-    });
+        
+      });
+    };
+
+
+    resizePlayerHolder();
+
 
     $(".nano").nanoScroller();
 
@@ -91,7 +113,7 @@ $(function() {
 			tags = channels[i].tags.split(',');
 			for (var f = 0; f < tags.length; f++) {
 				if (tags[f] == tagIdentifier) {
-    				menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'">'+channels[i].name+'</a></li>');
+    				menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name+'.png">'+channels[i].name+'</a></li>');
     				break;
     			}
 
@@ -196,8 +218,13 @@ $(function() {
 
     };
 
+    $(window).resize(function() {
+       clearTimeout(resizeDoIt);
+       resizeDoIt = setTimeout(resizePlayerHolder, 100);
+    });
+
    
-	$(document).on("click", "a.channelTagLink", function(e) {
+    $(document).on("click", "a.channelTagLink", function(e) {
     	e.preventDefault();
     	var id = $(this).data('identifier');
     	viewChannels(id);
@@ -215,7 +242,11 @@ $(function() {
     $(document).on("click", "a.channelLink", function(e) {
     	e.preventDefault();
     	mainPlayer.stop();
-        var mediaUrl = '/channel/'+$(this).data('identifier');
+        // var mediaUrl = '/channel/'+$(this).data('identifier');
+        
+        socket.emit('switchToChannel', { id: $(this).data('identifier') });
+
+        /*
         $.ajax({
                             url: mediaUrl,
                             dataType: 'json',
@@ -236,8 +267,10 @@ $(function() {
                             }
                         });
 
+        */
     	//mainPlayer.jPlayer("setMedia", {'m4v' : mediaUrl});
     });
+
 
     $(document).on("click", "a.backLink", function(e) {
 	e.preventDefault();
@@ -247,17 +280,19 @@ $(function() {
     $(document).on("click", "a.toggleLink", function(e) {
         e.preventDefault();
 	if ($(this).data('state')=='active') {
-        $('#sidebar').stop().animate({
-            height: '30px'
+          $('#sidebar').stop().animate({
+            left: '-260px'
 
-        });
-        $(this).data('state', 'hidden');
+          });
+          $(this).text('+');
+          $(this).data('state', 'hidden');
         }
         else {
-        $('#sidebar').stop().animate({
-            height: '100%'
-        });
-        $(this).data('state', 'active');
+          $('#sidebar').stop().animate({
+            left: '0px'
+          });
+          $(this).text('x');
+          $(this).data('state', 'active');
         }
     });
 
