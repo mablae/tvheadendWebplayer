@@ -113,7 +113,9 @@ $(function() {
 			tags = channels[i].tags.split(',');
 			for (var f = 0; f < tags.length; f++) {
 				if (tags[f] == tagIdentifier) {
-    				menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name+'.png">'+channels[i].name+'</a></li>');
+                                
+				
+    				menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name.toLowerCase()+'.png">'+channels[i].name+'</a></li>');
     				break;
     			}
 
