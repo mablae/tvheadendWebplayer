@@ -8,30 +8,28 @@ var app = express();
 app.http().io();
 
 var tvheadendHost = 'http://192.168.1.50:9981';
-var child = null;
-var workers = new Array();
+var childPid = null;
 
+var killWorker = function(callback) {
+      try {
+         if (childPid > 0) {
+            console.log('Killing process with pid '+childPid);
+            process.kill(childPid, 'SIGKILL');
+            app.io.broadcast('statusUpdate', {'msg': 'Stream gestoppt.'});
+         }
 
-var killWorker= function() {
-      for (var i = 0; i < workers.length; i++) {
-        if (workers[i] != null) {
-          console.log('will now try to kill worker: ' + workers[i].pid +'\n');
-          try {
-            process.kill(workers[i].pid, 'SIGKILL');
-          }
-          catch (e) {
-            console.log('The process was already gone...');
-            
-          }       
-          workers[i] = null;
-          }
+      } 
+      catch (e) {
+        console.log('The process was killed before...');
+        app.io.broadcast('statusUpdate', {'msg': 'Stream ist abgestürzt.'});
       }
+      callback();
 };
 
 process.on( 'SIGINT', function() {
   console.log( "\n...gracefully shutting down from  SIGINT (Crtl-C)" )
   // some other closing procedures go here
-  killWorker();
+  process.kill(childPid,'SIGKILL');
   app.io.broadcast('statusUpdate', { 'msg' : 'Node.js Backend wurde beendet!' });
   process.exit( )
 })
@@ -41,7 +39,7 @@ process.on( 'SIGINT', function() {
 /* Socket.IO Controlling */
 
 app.io.sockets.on('connection', function (socket) {
-  socket.emit('say-hello', { connected: 'true' });
+  socket.emit('say-hello', { 'connected': true });
 });
 
 
@@ -63,43 +61,43 @@ app.io.route('switchToChannel', function(req) {
   var pathToMovie =  tvheadendHost + '/stream/channelid/' +req.data.id; 
   var cmd = 'avconv';
   var args = 
-   ['-i' , pathToMovie, 
-    '-acodec', 'aac',
-    '-strict', 'experimental',
+   ['-re', '-i' , pathToMovie, 
+    '-acodec', 'libmp3lame',
     '-b:a', '128k',
     '-ar', '44100',
     '-vcodec', 'libx264',
     '-filter:v', 'yadif',
     '-threads', '4',
-    //'-preset', '',
+    //'-preset', 'veryslow',
     '-profile:v', 'baseline', 
-    '-b:v', '3000k',
+    '-b:v', '5000k',
     '-f', 'flv',
     '-s', '964x544',
     '-metadata', 'streamName=myStreamName',
     'tcp://127.0.0.1:6666'];
-  killWorker();
 
+
+
+
+  killWorker(function() {
+  
   console.log('Starting stream for: '+ pathToMovie);
-  console.log('Command is: '+ cmd);
+  console.log('Command is: '+ cmd + args.join(' '));
   child = spawn(cmd, args, {
      detached: true,
      stdio: [ 'ignore', out, err ]
-     } );
+     });
 
-  console.log('Spawned child pid: ' + child.pid);
-  workers.push(child);
+   console.log('Spawned child pid: ' + child.pid);
+   var response = {
+                   'msg' : 'Wiedergabe wird gestartet...', 
+                   'startPlayback': true
+                  };
 
-  child.on('exit', function() {
-    console.log('avconv stopped\n - deleting process '+child.pid+' from list...');
-    req.io.emit('statusUpdate', { 'msg' : 'AvConv wurde beendet...' });
-    });    
+   childPid = child.pid;  
 
-  var response = {'msg' : 'Wiedergabe wird gestartet...'};
-  
-
-  req.io.emit('statusUpdate', response);
-
+   req.io.emit('statusUpdate', response);
+  });
 
 });
 

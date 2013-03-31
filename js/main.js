@@ -37,8 +37,9 @@ $(function() {
 
    socket.on('statusUpdate', function(data) {
        console.log(data);
-       if (data) {
-           humane.log(data.msg);
+       humane.log(data.msg);
+       if (data.startPlayback) {
+           mainPlayer.stop();
            mainPlayer.play();
        }
    });
