@@ -10,6 +10,8 @@ It offers a nice webinterface, just for watching TV.
 
 Not less. Not more. 
 
+![Meh Screenshot](http://i.imgur.com/4xexQVS.jpg)
+
 
 What is needed?
 -----------------
