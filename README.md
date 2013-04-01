@@ -36,11 +36,11 @@ Just type `bower install` in project root.
 How to start this thing?
 ----------------
 
-`git clone git@github.com:mablae/tvheadendWebplayer.git`
-`cd tvheadendWebplayer`
-`npm install`
-`bower install`
-`node app.js`
+ - `git clone git@github.com:mablae/tvheadendWebplayer.git`
+ - `cd tvheadendWebplayer`
+ - `npm install`
+ - `bower install`
+ - `node app.js`
 
 Open `http://127.0.0.1:4000/` in webbrowser. 
 
