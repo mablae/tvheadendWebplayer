@@ -21,11 +21,11 @@ It was made to admin tvheadend. This is made, to use tvheadend.
 What external libraries/tools are needed?
 -----------------
  
-- crtmpserver 
-- avconv
-- node.js / npm
-- bower
-- flash plugin (maybe I'll switch to real Apple HLS to support Ipad also)
+ - crtmpserver 
+ - avconv
+ - node.js / npm
+ - bower
+ - flash plugin (maybe I'll switch to real Apple HLS)
 
 The webapp is served by node.js server. Also the avconv process is controlled by this instance.
 
@@ -48,14 +48,14 @@ Open `http://127.0.0.1:4000/` in webbrowser.
 TODO:
 ----------------
 
-- Make a config file or config in webinterface or both
-  Options needed: 
+ - Make a config file or config in webinterface or both
+   Options needed: 
    - IP-Adress of tvheadend
    - Port of tvheadend
    - Port to run this on
 
    - Make the streaming settings configurable
 
-- EPG (what is running on channel)
-- Highlight current tuned channel
-- Shutdown the stream (maybe on window.close() event ?)
+ - EPG (what is running on channel)
+ - Highlight current tuned channel
+ - Shutdown the stream (maybe on window.close() event ?)
