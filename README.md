@@ -47,15 +47,11 @@ Open `http://127.0.0.1:4000/` in webbrowser.
 
 TODO:
 ----------------
-
  - Make a config file or config in webinterface or both
-   Options needed: 
    - IP-Adress of tvheadend
    - Port of tvheadend
    - Port to run this on
-
    - Make the streaming settings configurable
-
  - EPG (what is running on channel)
  - Highlight current tuned channel
  - Shutdown the stream (maybe on window.close() event ?)
