@@ -1,10 +1,3 @@
-/*
-
-author: malte blaettermann
-twitter: @mablae
-
-*/
-
 
 $(function() {
 
@@ -23,14 +16,7 @@ $(function() {
 
     /* SocketIO EventListeners */
 
-    socket.on('say-hello', function (data) {
-        console.log(data);
-        if (data.connected) {
-            humane.log("WebSockets Verbindung hergestellt!");
-        }
-    }); 
-
-    socket.on('error', function(errObj) {
+   socket.on('error', function(errObj) {
        console.log(errObj);
 
    });
@@ -74,20 +60,24 @@ $(function() {
     });
 
   
-   var resizePlayerHolder = function() {
-     $('#playerHolder').css({
+    var resizePlayerHolder = function() {
+      $('#playerHolder').css({
         width: $(window).width()- 5,
         height: $(window).height() - 20
-        
-        
       });
+
+      $('#sidebar').css({
+        height: $(window).height() - 20
+      });
+      $('#navHolder').css({
+        height: $(window).height() - 80
+      });
+
+
+      $(".nano").nanoScroller();
     };
 
-
     resizePlayerHolder();
-
-
-    $(".nano").nanoScroller();
 
     var parseChannels = function(data) {
     	channelsLoaded = true;
@@ -95,46 +85,39 @@ $(function() {
     	
     };
 
-
     var viewChannelTags = function() {
     	
-	menuHolder.html('');
-    	for (var i = 0; i <= channelTags.length - 1; i++) {
-    		menuHolder.append('<li ><a class="channelTagLink" href="#" data-identifier="'+channelTags[i].identifier+'">'+channelTags[i].name+'</a></li>');
+      menuHolder.html('');
+      for (var i = 0; i <= channelTags.length - 1; i++) {
+        menuHolder.append('<li ><a class="channelTagLink" href="#" data-identifier="'+channelTags[i].identifier+'">'+channelTags[i].name+'</a></li>');
     	};
     	$(".nano").nanoScroller();
     	
-    }
+      }
 
 
-	var viewChannels = function(tagIdentifier) {
-		menuHolder.html('');
-                menuHolder.append('<li><a href="#" class="backLink" ><strong>..</strong></a></li>');
-		for (var i = 0; i < channels.length; i++) {
-			tags = channels[i].tags.split(',');
-			for (var f = 0; f < tags.length; f++) {
-				if (tags[f] == tagIdentifier) {
-                                
-				
-    				menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name.toLowerCase()+'.png">'+channels[i].name+'</a></li>');
-    				break;
-    			}
-
-			};
-				
-    	       }
-    	       $(".nano").nanoScroller();	
-	}; 
+      var viewChannels = function(tagIdentifier) {
+        menuHolder.html('');
+        menuHolder.append('<li><a href="#" class="backLink" ><strong>..</strong></a></li>');
+        for (var i = 0; i < channels.length; i++) {
+          tags = channels[i].tags.split(',');
+          for (var f = 0; f < tags.length; f++) {
+            if (tags[f] == tagIdentifier) {
+              menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name.toLowerCase()+'.png">'+channels[i].name+'</a></li>');
+              break;
+       	      }
+	  };
+        }
+        $(".nano").nanoScroller();	
+      }; 
 
     var loadChannelTags = function() {
     	// localStorage.clear();
     	if (localStorage.getItem('channelTags')==null) {
 
 			$.ajax({
-			    type: 'POST',
-			    url: tvheadendHost+'/channeltags',
-			    crossDomain: true,
-			    data: "op=listTags",
+			    type: 'GET',
+			    url: '/channelTags',
 			    dataType: 'json',
 			    success: function(responseData, textStatus, jqXHR) 
 			    {
@@ -158,10 +141,8 @@ $(function() {
     var loadChannels = function() {
     	if (localStorage.getItem('channels')==null) {
 			$.ajax({
-			    type: 'POST',
-			    url: tvheadendHost+'/channels',
-			    crossDomain: true,
-			    data: "op=list",
+			    type: 'GET',
+			    url: '/channels',
 			    dataType: 'json',
 			    success: function(responseData, textStatus, jqXHR) 
 			    {
@@ -217,7 +198,7 @@ $(function() {
 
     	loadChannelTags();
     	loadChannels();
-    	
+    	resizePlayerHolder();
 
     };
 
@@ -301,8 +282,7 @@ $(function() {
 
 
     init();
-
-    
+ 
 
 });
 

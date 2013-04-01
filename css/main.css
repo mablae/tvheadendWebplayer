@@ -24,6 +24,7 @@ body, html {
         border-bottom-left-radius: 0px;        	
         min-height: 100%; /* real browsers */
         height: 100%;
+        
 }
 
 #sidebar h2 {
@@ -48,9 +49,16 @@ a.toggleLink {
   text-decoration: none;
 }
 
+a.channelLink {
+  clear: both; 
+  line-height: 24px;
+  height: 50px;
+}
+
 a.channelLink img {
   width: 48px;
   height: 48px; 
+  float: left;
 }
 
 .nano { background: width: 100%; height: 500px; }

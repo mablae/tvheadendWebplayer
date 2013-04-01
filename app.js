@@ -1,10 +1,11 @@
 var express = require('express.io'),
     spawn = require('child_process').spawn,
     fs = require('fs');
-    out = fs.openSync('./out.log', 'a'),
-    err = fs.openSync('./out.log', 'a');
-
+    out = fs.openSync('./out.log', 'a');
+    
+var request = require('request');
 var app = express();
+
 app.http().io();
 
 var tvheadendHost = 'http://192.168.1.50:9981';
@@ -43,10 +44,27 @@ app.io.sockets.on('connection', function (socket) {
 });
 
 
-
-
 /* Express controllers */
 app.use(express.static(__dirname));
+
+app.get('/channels', function(req, res) {
+  request(tvheadendHost + '/channels?op=list', function(error, response, body) {
+    res.send(200, body);  
+  });
+});
+
+
+app.get('/channelTags', function(req, res) {
+  request(tvheadendHost + '/channeltags?op=listTags', function(error, response, body) {
+      res.send(200, body);
+  });
+});
+
+app.get('/epg', function(req, res) {
+  request(tvheadendHost + '/epg?limit=500&start=0', function(error, response, body) {
+    res.send(200, body);
+  });
+});
 
 
 app.get('/', function(req, res) {
@@ -76,16 +94,13 @@ app.io.route('switchToChannel', function(req) {
     '-metadata', 'streamName=myStreamName',
     'tcp://127.0.0.1:6666'];
 
-
-
-
   killWorker(function() {
   
   console.log('Starting stream for: '+ pathToMovie);
   console.log('Command is: '+ cmd + args.join(' '));
   child = spawn(cmd, args, {
      detached: true,
-     stdio: [ 'ignore', out, err ]
+     stdio: [ 'ignore', out, null ]
      });
 
    console.log('Spawned child pid: ' + child.pid);
@@ -96,8 +111,9 @@ app.io.route('switchToChannel', function(req) {
 
    childPid = child.pid;  
 
-   req.io.emit('statusUpdate', response);
-  });
+   req.io.emit('statusUpdate', response);  
+
+});
 
 });
 
