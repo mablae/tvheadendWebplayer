@@ -10,52 +10,82 @@ body, html {
 }
 
 
-#sidebar {
-	position: absolute;
-	background-color: #ccc;
-	width: 240px;
-	padding: 10px;
-	display: block;
-	/*overflow: hidden;*/
-	z-index: 30;
-        border-top-left-radius: 0px;
-        border-top-right-radius: 0px;
-        border-bottom-right-radius: 20px;
-        border-bottom-left-radius: 0px;        	
-        min-height: 100%; /* real browsers */
-        height: 100%;
-        
-}
-
-#sidebar h2 {
-	color: #333;
-	font-weight: normal;
-	font-size: 18px;
-}
-
 
 #playerHolder {
 
       
 }
+#header {
 
-a.toggleLink {
-  font-size: 30px;
-  padding: 10px;
-  left: 260px;
-  position: absolute;
-  border-radius: 0px 20px 20px 0px;
+  height: 70px;
+  background-color: #333;
+  margin: 0;
+  color: #ddd;
+}
+
+#header h3 {
+  margin: 0;
+  line-height: 70px;
+  padding-left: 20px;
+}
+
+
+div.toggleLinkWrap {
+  font-size: 35px;
+  padding: 15px;
+  left: 0px;
+  top: 70px;
+  position: absolute; 
+  border-radius: 0px 00px 20px 0px;
   background-color: #333;
   text-decoration: none;
+
 }
 
-a.channelLink {
-  clear: both; 
-  line-height: 24px;
-  height: 50px;
+div.toggleLinkWrapEpg {
+  font-size: 35px;
+  padding: 15px;
+  right: 0px;
+  top: 70px;
+  position: absolute; 
+  border-radius: 0px 0px 0px 20px;
+  background-color: #333;
+  text-decoration: none;
+
 }
 
-a.channelLink img {
+a.toggleLink, a.toggleLinkEpg {
+  font-size: 35px;
+  text-decoration: none;
+  display: block;
+  transition: all 0.5s;
+  -webkit-transition: all 0.5s; /* Safari */
+
+}
+
+a.toggleLinkActive {
+  font-size: 35px;
+  text-decoration: none;
+  -moz-transform:rotate(45deg);
+  -webkit-transform:rotate(45deg);
+  -o-transform:rotate(45deg);
+  transform:rotate(45deg);
+  disply: block;
+  transition: all 0.5s;
+  -webkit-transition: all 0.5s; /* Safari */
+
+}
+
+a.navLink {
+ line-height: 48px!important;
+ height: 48px;
+}
+
+a.navLink:hover, a.navLink:active, a.navLink:focus {
+  color: #333;
+}
+
+a.navLink img {
   width: 48px;
   height: 48px; 
   float: left;

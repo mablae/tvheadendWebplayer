@@ -1,289 +1,280 @@
+$(function() {
+  "use strict";
+  // Create slidr instances
+  $('.toggleLink').sidr({name: 'sidrLeft', side: 'left'});
+  $('.toggleLinkEpg').sidr({name: 'epgHolder', side: 'right'});
+});
 
 $(function() {
+  "use strict";
+  var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent);
 
-    $('#sidebar').css({
-        height: $(document).height()-50
-	});
-    var channelTags = [];
-    var channelTagsLoaded = false;
-    var channels = [];
-    var channelsLoaded = false;
-    var tvheadendHost = 'http://192.168.1.50:9981';
-    var currentTag = false;
-    var menuHolder = $('#menuHolder');
-    var socket = io.connect();
-    var resizeDoIt; 
 
-    /* SocketIO EventListeners */
+  var channelTags = [];
+  var channels = [];
+  var epg = [];
 
-   socket.on('error', function(errObj) {
-       console.log(errObj);
+  var tvheadendHost = 'http://192.168.1.50:9981';
 
-   });
+  var currentTag = false;
+  var currentChannel = null;
+  var currentEpg = null;
+  var socket = io.connect();
 
-   socket.on('statusUpdate', function(data) {
-       console.log(data);
-       humane.log(data.msg);
-       if (data.startPlayback) {
-           mainPlayer.stop();
-           mainPlayer.play();
-       }
-   });
+  var menuHolder = $('#menuHolder');
+  var resizeDoIt; 
 
-   var mainPlayer = flowplayer("playerHolder", "/flowplayer/flowplayer-3.2.16.swf", {
-      clip: {
-        url: 'myStreamName',
-        live: true,
-        scaling: 'fit',
-        autoPlay: false,
-        onBeforePause : function(){
-            return false;
-        },          
-        // configure clip to use influxis as our provider, it uses our rtmp plugin
-        provider: 'influxis'
-    },
- 
-    // streaming plugins are configured under the plugins node
-    plugins: {
-        // Show no controls at all
-        controls: null,       
+  /* SocketIO EventListeners */
 
- 
-        // here is our rtpm plugin configuration
-        influxis: {
-            url: "flowplayer.rtmp-3.2.12.swf",
- 
-            // netConnectionUrl defines where the streams are found
-            netConnectionUrl: 'rtmp://192.168.1.50/flvplayback'
+ socket.on('statusUpdate', function(data) {
+     console.log(data);
+
+     if (data.msg) {
+     humane.log(data.msg); 
+     }
+     
+     if (data.cmd) {
+      switch (data.cmd) {
+        case "startPlayback":
+          if (mainPlayer !== null && !isMobile) {
+            mainPlayer.stop();
+            setTimeout(
+              function() { mainPlayer.play(); },
+              8000
+            );
+          }
+          break;
+        case "stopPlayback":
+          if (mainPlayer !== null && !isMobile) {
+            mainPlayer.stop();
+          }
+          break;
+        case "setCurrentChannel":
+          if (data) {
+            $('a.channelLink').parent().removeClass('active');
+            $('a.channelLink[data-identifier="'+data.data.chid+'"]').parent().addClass('active');    
+            $('#header h3').text(data.data.name);
+            currentChannel = data.data;
+            }
+          break;
+  
+
+       // end if data.cmd   
+      }
+       
+    }
+
+ });
+  var mainPlayer = $('#playerHolder');
+
+
+  var viewCurrentEpg = function(chid) {
+    loadEpg();
+    currentEpg = [];
+    if (chid && epg.entries) {
+      for (var i = 0; i < epg.entries.length; i++) {
+        if (epg.entries[i].channelid === chid) {
+          currentEpg.push(epg.entries[i]); 
         }
       }
-    });
+    }
 
-  
-    var resizePlayerHolder = function() {
+    if (currentEpg) {
+      var epgHolder = $('#epgHolder');
+      epgHolder.html('<ul class="nav nav-pills nav-stacked"></ul>');
+      for (var p = 0; p < currentEpg.length; p++) {
+        epg = currentEpg[p];
+        $('#epgHolder .nav').append('<li><h3>' + epg.title + '</h3><p>'+moment.unix(epg.end).fromNow() + '</p></li>'); 
+      }
+    }
+  };
+
+ 
+ 
+  var resizePlayerHolder = function() {
       $('#playerHolder').css({
         width: $(window).width()- 5,
-        height: $(window).height() - 20
+        height: $(window).height() - 20    -70    
       });
-
+    
       $('#sidebar').css({
         height: $(window).height() - 20
       });
       $('#navHolder').css({
-        height: $(window).height() - 80
+        height: $(window).height() - 40
       });
-
 
       $(".nano").nanoScroller();
     };
 
+
+    
+  var viewChannelTags = function() {
+    menuHolder.html('');
+    for (var i = 0; i <= channelTags.length - 1; i++) {
+      menuHolder.append('<li ><a class="navLink channelTagLink" href="#" data-identifier="'+channelTags[i].identifier+'"><img src="/img/folder.png">'+channelTags[i].name+'</a></li>');
+    }
+    $(".nano").nanoScroller();
+  };
+
+
+  var viewChannels = function(tagIdentifier) {
+    menuHolder.html('');
+
+    menuHolder.append('<li><a href="#" class="backLink" href="#"><strong>..</strong></a></li>');
+    for (var i = 0; i < channels.length; i++) {
+      var tags = channels[i].tags.split(',');
+      for (var f = 0; f < tags.length; f++) {
+        if (tags[f] === tagIdentifier) {
+          menuHolder.append('<li><a class="navLink channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name.toLowerCase()+'.png">'+channels[i].name+'</a></li>');
+          break;
+        }
+      }
+    }
+    $(".nano").nanoScroller();	
+  }; 
+
+  var loadChannelTags = function() {
+    $.ajax({
+        type: 'GET',
+        url: '/channelTags',
+        dataType: 'json',
+        success: function(responseData, textStatus, jqXHR) 
+        {
+            localStorage.setItem('channelTags', JSON.stringify(responseData.entries));
+            channelTags = responseData.entries;
+            viewChannelTags();
+        },
+        error: function (responseData, textStatus, errorThrown) 
+        {
+            console.warn(responseData, textStatus, errorThrown);
+        }
+    });
+  };
+
+  var loadChannels = function() {
+    $.ajax({
+      type: 'GET',
+      url: '/channels',
+      dataType: 'json',
+      success: function(responseData, textStatus, jqXHR) 
+      {
+        channels = responseData.entries;
+      },
+      error: function (responseData, textStatus, errorThrown) 
+      {
+        console.warn(responseData, textStatus, errorThrown);
+          
+      }
+    });
+  };
+
+  var loadEpg = function() {
+      $.ajax({
+          type: 'GET',
+          url: '/epg',
+          dataType: 'json',
+          success: function(responseData, textStatus, jqXHR) 
+          {
+              epg = responseData;
+            
+
+          },
+          error: function (responseData, textStatus, errorThrown) 
+          {
+              console.warn(responseData, textStatus, errorThrown);
+          }
+      });
+  };
+
+  var init = function() {
+    /* Register clicks */
+    moment.lang('de');
+    loadChannelTags();
+    loadChannels();
+    loadEpg();
     resizePlayerHolder();
 
-    var parseChannels = function(data) {
-    	channelsLoaded = true;
-    	channels = data;
-    	
-    };
+    if (!isMobile) {
+      mainPlayer = flowplayer("playerHolder", {src: "/flowplayer/flowplayer-3.2.16.swf", wmode: 'gpu'}, {
+        clip: {
+          url: 'tvheadend',
+          live: true,
+          scaling: 'fit',
+          autoPlay: true,
+          onBeforePause : function(){
+              return false;
+          },          
+          // configure clip to use influxis as our provider, it uses our rtmp plugin
+          provider: 'influxis'
+      },
 
-    var viewChannelTags = function() {
-    	
-      menuHolder.html('');
-      for (var i = 0; i <= channelTags.length - 1; i++) {
-        menuHolder.append('<li ><a class="channelTagLink" href="#" data-identifier="'+channelTags[i].identifier+'">'+channelTags[i].name+'</a></li>');
-    	};
-    	$(".nano").nanoScroller();
-    	
-      }
-
-
-      var viewChannels = function(tagIdentifier) {
-        menuHolder.html('');
-        menuHolder.append('<li><a href="#" class="backLink" ><strong>..</strong></a></li>');
-        for (var i = 0; i < channels.length; i++) {
-          tags = channels[i].tags.split(',');
-          for (var f = 0; f < tags.length; f++) {
-            if (tags[f] == tagIdentifier) {
-              menuHolder.append('<li><a class="channelLink" href="#" data-name="'+channels[i].name+'"" data-identifier="'+channels[i].chid+'"><img src="/logos/'+channels[i].name.toLowerCase()+'.png">'+channels[i].name+'</a></li>');
-              break;
-       	      }
-	  };
+      // streaming plugins are configured under the plugins node
+      plugins: {
+          // Show no controls at all
+          controls: null,       
+          // here is our rtpm plugin configuration
+          influxis: {
+              url: "flowplayer.rtmp-3.2.12.swf",
+               // netConnectionUrl defines where the streams are found
+              netConnectionUrl: 'rtmp://192.168.1.50:1935/live'
+          }
         }
-        $(".nano").nanoScroller();	
-      }; 
+      });
+    } else {
+        mainPlayer.html('<h1>Start external streaming app here</h1>');
+      
+           mainPlayer.append('<a href="http://192.168.1.50:4051/hls/tvheadend/index.m3u8" class="btn" >HLS Livestream</a>');
+           mainPlayer.append('<a href="http://192.168.1.50:4051/tvheadend.flv" class="btn" >FLV progressive</a>');
+           mainPlayer.append('<a href="rtmp://192.168.1.50:1935/play/tvheadend" class="btn" >RTMP live</a>');
 
-    var loadChannelTags = function() {
-    	// localStorage.clear();
-    	if (localStorage.getItem('channelTags')==null) {
-
-			$.ajax({
-			    type: 'GET',
-			    url: '/channelTags',
-			    dataType: 'json',
-			    success: function(responseData, textStatus, jqXHR) 
-			    {
-			        localStorage.setItem('channelTags', JSON.stringify(responseData.entries));
-			        channelTags = responseData.entries;
-			        viewChannelTags();
-			    },
-			    error: function (responseData, textStatus, errorThrown) 
-			    {
-			        console.warn(responseData, textStatus, errorThrown);
-			        
-			    }
-			});
-		}
-		else {
-			channelTags = JSON.parse(localStorage.getItem('channelTags'));
-			viewChannelTags();
-		}
-    };
-
-    var loadChannels = function() {
-    	if (localStorage.getItem('channels')==null) {
-			$.ajax({
-			    type: 'GET',
-			    url: '/channels',
-			    dataType: 'json',
-			    success: function(responseData, textStatus, jqXHR) 
-			    {
-			    	localStorage.setItem('channels', JSON.stringify(responseData.entries));
-			        parseChannels(responseData.entries);
-			    },
-			    error: function (responseData, textStatus, errorThrown) 
-			    {
-			        console.warn(responseData, textStatus, errorThrown);
-			        
-			    }
-			});
-
-		}
-		else {
-			channels = JSON.parse(localStorage.getItem('channels'));
-			
-		}
-	};
-
-	var createStreamWindow = function(name, identifier) {
-		var tmpl = [
-			    // tabindex is required for focus
-			    '<div class="modal hide fade" tabindex="-1">',
-			      '<div class="modal-header">',
-			        '<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>',
-			        '<h3>Kanal anspielen</h3>', 
-			      '</div>',
-			      '<div class="modal-body">',
-			        '<p>Test</p>',
-			      '</div>',
-			      '<div class="modal-footer">',
-			        '<a href="#" data-dismiss="modal" class="btn">Abbrechen</a>',
-			      '</div>',
-			    '</div>'
-			  ].join('');
-
-		var channelDialog = $(tmpl).modal();
-		channelDialog.find('.modal-body').html(['<p>Externer Player oder im Browser starten?<p>' ,
-			'<div class="btn-group">' ,
-				'<a href="'+tvheadendHost+'/playlist/channelid/' +identifier+'.m3u" title="m3u Playlist" class="btn"><i class="icon-play"> </i> m3u Playlist</a>',
-				'<a href="'+tvheadendHost+'/stream/channelid/' +identifier+'" title="m3u Playlist" data-identifier="'+identifier+'" class="btn channelLinkStream"><i class="icon-play"> </i> Stream starten</a>',
-			'</div>'
-			].join(''))
-		channelDialog.modal();	  
-		
-		
-	};
+    }
+  };
 
 
-    var init = function() {
-    	/* Register clicks */
-
-    	loadChannelTags();
-    	loadChannels();
-    	resizePlayerHolder();
-
-    };
-
-    $(window).resize(function() {
-       clearTimeout(resizeDoIt);
-       resizeDoIt = setTimeout(resizePlayerHolder, 100);
-    });
-
-   
-    $(document).on("click", "a.channelTagLink", function(e) {
-    	e.preventDefault();
-    	var id = $(this).data('identifier');
-    	viewChannels(id);
-    });
-
-/*
-    $(document).on("click", "a.channelLink", function(e) {
-    	e.preventDefault();
-    	var id = $(this).data('identifier');
-    	var name = $(this).data('name');
-    	createStreamWindow(name, id);
-
-    });
-*/
-    $(document).on("click", "a.channelLink", function(e) {
-    	e.preventDefault();
-    	mainPlayer.stop();
-        // var mediaUrl = '/channel/'+$(this).data('identifier');
-        
-        socket.emit('switchToChannel', { id: $(this).data('identifier') });
-
-        /*
-        $.ajax({
-                            url: mediaUrl,
-                            dataType: 'json',
-                            success: function(responseData, textStatus, jqXHR)
-                            {
-                                //localStorage.setItem('channelTags', JSON.stringify(responseData.entries));
-                                //channelTags = responseData.entries;
-                                //viewChannelTags();
-
-                               setTimeout(function() {
-                               mainPlayer.play();
-                               } , 500);
-                            },
-                            error: function (responseData, textStatus, errorThrown)
-                            {
-                                console.warn(responseData, textStatus, errorThrown);
-
-                            }
-                        });
-
-        */
-    	//mainPlayer.jPlayer("setMedia", {'m4v' : mediaUrl});
-    });
+  init();
 
 
-    $(document).on("click", "a.backLink", function(e) {
-	e.preventDefault();
-        viewChannelTags();
-	});
-
-    $(document).on("click", "a.toggleLink", function(e) {
-        e.preventDefault();
-	if ($(this).data('state')=='active') {
-          $('#sidebar').stop().animate({
-            left: '-260px'
-
-          });
-          $(this).text('+');
-          $(this).data('state', 'hidden');
-        }
-        else {
-          $('#sidebar').stop().animate({
-            left: '0px'
-          });
-          $(this).text('x');
-          $(this).data('state', 'active');
-        }
-    });
+  $(window).resize(function() {
+     clearTimeout(resizeDoIt);
+     resizeDoIt = setTimeout(resizePlayerHolder, 100);
+  });
 
 
-    init();
- 
+  $(document).on("click", "a.channelTagLink", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    var id = $(this).data('identifier');
+    viewChannels(id);
+  });
+
+  $(document).on("click", "a.channelLink", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    socket.emit('switchToChannel', { id: $(this).data('identifier') });
+    return false;
+  });
+
+
+  $(document).on("click", "a.backLink", function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    viewChannelTags();
+  });
+
+  $(document).on("click", "a.toggleLink", function(e) {
+    e.preventDefault();
+    $.sidr('toggle', 'toggleLink');
+     $(this).toggleClass('toggleLinkActive');
+     
+  });
+
+  $(document).on("click", "a.toggleLinkEpg", function(e) {
+    e.preventDefault();
+    viewCurrentEpg(currentChannel.chid);
+    $.sidr('toggle', 'epgHolder');
+    $(this).toggleClass('toggleLinkActive');
+  });
+
 
 });
-
-  
