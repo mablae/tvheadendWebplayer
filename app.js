@@ -229,7 +229,7 @@ app.io.route('switchToChannel', function(req, res) {
     /* Handle events from the transcoder process */
     avconvProcess.stderr.on('data', function (data) {     
       // collect data somehow
-      console.log(globalConfig.streamTranscoder.': '+data);
+      console.log(globalConfig.streamTranscoder+': '+data);
     });
 
     avconvProcess.on('close', function (code, signal) {
