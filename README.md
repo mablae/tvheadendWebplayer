@@ -1,6 +1,8 @@
 tvheadendWebplayer
 ==================
 
+Disclaimer: Abadoned project. Not maintained. Not used. At least not by me. 
+
 A webplayer app for tvheadend. 
 
 A little fun project to learn new technologies like node.js. 
